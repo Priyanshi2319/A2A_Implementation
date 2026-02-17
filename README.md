@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🤖 TellTimeAgent - A2A Agent Using Google ADK
 
 Welcome to **TellTimeAgent** — a minimal Agent2Agent (A2A) implementation using Google's [Agent Development Kit (ADK)](https://github.com/google/agent-development-kit).
@@ -169,3 +170,6 @@ MIT — free for personal and commercial use.
 - GitHub: [@theailanguage](https://github.com/theailanguage)
 
 ---
+=======
+# A2A_Implementation
+>>>>>>> 5b030518b7b3002111cec16770b118d89d0e209f
