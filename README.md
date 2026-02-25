@@ -1,175 +1,148 @@
-<<<<<<< HEAD
-# 🤖 TellTimeAgent - A2A Agent Using Google ADK
+# LangGraph A2A Agent + Host
 
-Welcome to **TellTimeAgent** — a minimal Agent2Agent (A2A) implementation using Google's [Agent Development Kit (ADK)](https://github.com/google/agent-development-kit).
+A simple **LangGraph** agent using the **a2a-sdk** and **OpenAI**, with an **agent registry** (JSON), **agent discovery** (Python), and a **host** that routes requests to registered agents.
 
-This example demonstrates how to build, serve, and interact with a Gemini-powered agent that replies with the current time.
+## Layout
 
----
+- **`agent_registry.json`** – Registry of agents (id, name, url, skills, enabled).
+- **`agent_discovery.py`** – Loads the registry and provides `get_agents()`, `get_agent_by_id()`, `resolve_agent_for_request()`, etc.
+- **`agent/`** – LangGraph + OpenAI agent exposed as an A2A server:
+  - `langgraph_agent.py` – LangGraph `create_react_agent` with OpenAI (no tools).
+  - `agent_executor.py` – A2A `AgentExecutor` that runs the LangGraph agent and pushes replies to the event queue.
+  - `__main__.py` – Runs the A2A server (default port **8001**).
+- **`host/`** – Host A2A server that reads the registry and discovery and routes requests:
+  - `host_executor.py` – Executor that resolves which agent to call and forwards the request via `A2AClient`.
+  - `__main__.py` – Runs the host server (default port **8080**); reads **mcp_registry** and uses **mcp_connector** to list MCP tools for discovery.
+- **`mcp_registry/`** – MCP server registry (e.g. `server.json` with `deployments[].url` for the remote MCP server).
+- **`mcp_connector/`** – Connects to the MCP server from the registry, lists tools/resources, and calls tools (`list_tools`, `call_tool`, `create_client`, `list_tools_from_registry`).
+- **`mcp_agent/`** – LangGraph agent that uses the MCP server and its tools to reply:
+  - `mcp_langgraph_agent.py` – Loads MCP URL from mcp_registry, connects via mcp_connector, builds LangChain tools from MCP tools, runs a ReAct agent.
+  - `mcp_agent_executor.py` – A2A `AgentExecutor` that runs the MCP-backed agent.
+  - `__main__.py` – Runs the MCP Tool Agent A2A server (default port **8002**).
 
-## 📦 Project Structure
-
-```bash
-a2a_samples/version_2_adk_agent/
-├── .env                       # API key goes here (not committed)
-├── pyproject.toml            # Dependency config (used with uv or pip)
-├── README.md                 # You're reading it!
-├── app/
-│   └── cmd/
-│       └── cmd.py            # Command-line app to talk to the agent
-├── agents/
-│   └── google_adk/
-│       ├── __main__.py       # Starts the agent + A2A server
-│       ├── agent.py          # Gemini agent definition using Google ADK
-│       └── task_manager.py   # Handles task lifecycle
-├── server/
-│   ├── server.py             # A2A server logic (routes, JSON-RPC)
-│   └── task_manager.py       # In-memory task storage + interface
-└── models/
-    ├── agent.py              # AgentCard, AgentSkill, AgentCapabilities
-    ├── json_rpc.py           # JSON-RPC request/response formats
-    ├── request.py            # SendTaskRequest, A2ARequest union
-    └── task.py               # Task structure, messages, status
-```
-
----
-
-## 🚀 Features
-
-✅ Gemini-powered A2A agent using Google ADK  
-✅ Follows JSON-RPC 2.0 specification  
-✅ Supports session handling and memory  
-✅ Custom A2A server implementation (non-streaming)  
-✅ CLI to interact with agent  
-✅ Fully commented and beginner-friendly
-
----
-
-## 💠 Setup
-
-### 1. Clone and navigate to the repo
+## Setup
 
 ```bash
-git clone https://github.com/your-username/a2a-adk-telltime-agent.git
-cd a2a_samples/version_2_adk_agent
-```
-
-### 2. Create virtual environment
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-```
-
-### 3. Install dependencies
-
-Using [`uv`](https://github.com/astral-sh/uv):
-
-```bash
-uv pip install .
-```
-
-Or using pip (if you generated a `requirements.txt`):
-
-```bash
+python -m venv .venv
+.venv\Scripts\activate   # Windows
+# source .venv/bin/activate  # macOS/Linux
 pip install -r requirements.txt
 ```
 
----
+Set **`OPENAI_API_KEY`** in the environment (required for the LangGraph agent).
 
-## 🔑 API Key Setup
+## Run
 
-Create a `.env` file in the root directory:
+1. **Start the LangGraph agent** (A2A server on port 8001):
+
+   ```bash
+   python -m agent
+   ```
+
+2. **Optional: start the MCP server** (e.g. the Step-by-Step MCP server on port 8092). The **MCP Tool Agent** and the **host** use **mcp_registry** and **mcp_connector** to connect to it.
+
+3. **Optional: start the MCP Tool Agent** (A2A server on port 8002; uses MCP tools to reply):
+
+   ```bash
+   python -m mcp_agent
+   ```
+
+4. **Start the host** (reads `agent_registry.json` and mcp_registry, uses agent_discovery and mcp_connector to route and list tools):
+
+   ```bash
+   python -m host
+   ```
+
+5. **Call the host** (e.g. with an A2A client or curl). The host uses `agent_discovery` to resolve the agent (by default the first enabled agent in the registry) and forwards the request to it.
+
+## Testing with JSON-RPC
+
+A2A uses JSON-RPC 2.0. The server accepts **POST** at **`/`** with a JSON body.
+
+**Sample request** (see `test_message_send.json`):
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "message/send",
+  "params": {
+    "message": {
+      "kind": "message",
+      "messageId": "test-msg-001",
+      "role": "user",
+      "parts": [
+        { "kind": "text", "text": "What is 2 + 2? Reply in one sentence." }
+      ]
+    },
+    "metadata": {}
+  }
+}
+```
+
+**Test the host** (agent must be running on 8001):
 
 ```bash
-touch .env
+curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d @test_message_send.json
 ```
 
-And add your Gemini API key:
-
-```env
-GOOGLE_API_KEY=your_api_key_here
-```
-
----
-
-## ▶️ Running the Agent
-
-In one terminal window:
+**Test the agent directly** (skip the host):
 
 ```bash
-source .venv/bin/activate
-cd a2a_samples/version_2_adk_agent
-python3 -m agents.google_adk
+curl -X POST http://localhost:8001/ -H "Content-Type: application/json" -d @test_message_send.json
 ```
 
-You should see:
+**Optional routing via host:** to target a specific agent or skill, add to `params.metadata`:
 
+```json
+"metadata": { "agent_id": "langgraph-assistant" }
 ```
-Uvicorn running on http://localhost:10002
+```json
+"metadata": { "agent_id": "mcp-tool-agent" }
 ```
-
----
-
-## 🧑‍💻 Running the Client
-
-Open a **second terminal window**:
-
-```bash
-source .venv/bin/activate
-cd a2a_samples/version_2_adk_agent
-python3 -m app.cmd.cmd --agent http://localhost:10002
+or
+```json
+"metadata": { "skill_tag": "assistant" }
 ```
 
-You can now type messages like:
+The response is JSON-RPC: either a **result** (e.g. `Message` with `role: "agent"` and `parts`) or an **error** object.
 
-```bash
-what time is it?
+## Agent registry
+
+`agent_registry.json` lists agents and their URLs. The host uses **agent_discovery** to:
+
+- **List** enabled agents.
+- **Resolve** which agent handles a request:
+  - Optional **`metadata.agent_id`** – use that agent id.
+  - Optional **`metadata.skill_tag`** – use first agent whose skill has that tag.
+  - Otherwise use the **first enabled agent**.
+
+Example:
+
+```json
+{
+  "agents": [
+    {
+      "id": "langgraph-assistant",
+      "name": "LangGraph Assistant",
+      "url": "http://localhost:8001",
+      "version": "1.0.0",
+      "skills": [...],
+      "enabled": true
+    }
+  ]
+}
 ```
 
-And get a Gemini-powered response!
+## MCP (mcp_registry + mcp_connector)
 
----
+- **mcp_registry/server.json** – Describes the remote MCP server (e.g. `deployments[].url`: `http://localhost:8092/mcp`). Override with **`MCP_SERVER_URL`**.
+- **mcp_connector** – `get_server_url()`, `create_client()`, `list_tools(client)`, `call_tool(client, name, arguments)`, `list_tools_from_registry(registry_path)` (async, used by the host to list tools at startup).
+- The **host** reads mcp_registry and calls **list_tools_from_registry** at startup; if the MCP server is reachable, it adds an "MCP registry tools" skill to the host card with the tool names.
+- The **MCP Tool Agent** (port 8002) connects to the MCP server from the registry, lists tools, and runs a LangGraph ReAct agent with those tools to answer user messages.
 
-## 🔍 Agent Workflow (A2A Lifecycle)
+## Optional env
 
-1. The client queries the agent using a CLI (`cmd.py`)
-2. The A2A client sends a task using JSON-RPC to the A2A server
-3. The server parses the request, invokes the task manager
-4. The task manager calls the Gemini-powered `TellTimeAgent`
-5. The agent responds with current system time
-6. The server wraps the response and sends it back to the client
-
----
-
-## 📸 Screenshot (Optional)
-
-> Add a screenshot or GIF of the CLI interaction here!
-
----
-
-## 📜 License
-
-MIT — free for personal and commercial use.
-
----
-
-## 🙌 Acknowledgements
-
-- [Google ADK (Agent Development Kit)](https://github.com/google/agent-development-kit)
-- [Gemini API](https://ai.google.dev/)
-- [Starlette](https://www.starlette.io/)
-- [Uvicorn](https://www.uvicorn.org/)
-
----
-
-## 🌐 Connect with Me
-
-- [YouTube: The AI Language](https://youtube.com/@theailanguage)
-- Twitter / X: [@theailanguage](https://twitter.com/theailanguage)
-- GitHub: [@theailanguage](https://github.com/theailanguage)
-
----
-=======
-# A2A_Implementation
->>>>>>> 5b030518b7b3002111cec16770b118d89d0e209f
+- **Agent:** `OPENAI_API_KEY`, `OPENAI_MODEL` (default `gpt-4o-mini`), `AGENT_URL` (for card URL).
+- **MCP Agent:** `OPENAI_API_KEY`, `MCP_AGENT_URL`, `MCP_SERVER_URL` (or use mcp_registry).
+- **Host:** `HOST_URL` (for card URL). Registry path is the project-root `agent_registry.json` unless you pass it in code.

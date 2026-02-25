@@ -1,0 +1,38 @@
+{
+  "agents": [
+    {
+      "id": "langgraph-assistant",
+      "name": "LangGraph Assistant",
+      "description": "A simple LangGraph agent powered by OpenAI that answers questions and assists with general tasks.",
+      "url": "http://localhost:8001",
+      "version": "1.0.0",
+      "skills": [
+        {
+          "id": "general_assistant",
+          "name": "General Assistant",
+          "description": "Answers questions and assists with general tasks using OpenAI",
+          "tags": ["assistant", "openai", "langgraph"],
+          "examples": ["What is the capital of France?", "Explain recursion briefly"]
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "id": "mcp-tool-agent",
+      "name": "MCP Tool Agent",
+      "description": "LangGraph agent that uses tools from the MCP server (add, greet, echo , just_fun_random) via mcp_registry and mcp_connector.",
+      "url": "http://localhost:8002",
+      "version": "1.0.0",
+      "skills": [
+        {
+          "id": "mcp_tools",
+          "name": "MCP tools",
+          "description": "Use remote MCP server tools (add, greet, echo , just_fun_random) to answer questions",
+          "tags": ["mcp", "tools", "assistant", "generate random number"],
+          "examples": ["Add 3 and 5", "Greet Alice", "Echo hello world" , "generate random number between 10 and 20"]
+        }
+      ],
+      "enabled": true
+    }
+  ]
+}

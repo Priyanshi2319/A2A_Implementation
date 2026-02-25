@@ -1,0 +1,29 @@
+{
+  "name": "com.example.step-by-step-mcp",
+  "description": "Step-by-Step MCP Server — FastMCP server with tools (add, greet, echo , just_fun_random) and resources for remote agents.",
+  "version": "1.0.0",
+  "capabilities": {
+    "tools": true,
+    "resources": true,
+    "prompts": false
+  },
+  "deployments": [
+    {
+      "kind": "remote",
+      "label": "Remote (Streamable HTTP)",
+      "url": "http://localhost:8092/mcp",
+      "transport": "streamable-http",
+      "description": "Connect to the server over HTTP. Replace localhost with your server host when deployed."
+    }
+  ],
+  "package": null,
+  "runtime": {
+    "language": "python",
+    "version": "3.10+"
+  },
+  "documentation": {
+    "homepage": null,
+    "repository": null,
+    "license": null
+  }
+}

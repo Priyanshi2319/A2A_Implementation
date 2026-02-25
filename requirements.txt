@@ -1,0 +1,17 @@
+# A2A and server
+a2a-sdk[http-server]>=0.3.0
+uvicorn>=0.30.0
+
+# LangGraph + OpenAI agent
+langgraph>=0.2.0
+langchain-openai>=0.2.0
+langchain-core>=0.3.0
+
+# HTTP client for host -> agent
+httpx>=0.27.0
+
+# MCP connector (remote MCP server tools)
+fastmcp>=0.1.0
+
+# Dotenv
+python-dotenv>=1.0.0

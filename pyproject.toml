@@ -1,15 +1,16 @@
 [project]
-name = "version_2_adk_agent"
+name = "step-by-step"
 version = "0.1.0"
-description = "A2A Agent With Google ADK"
+description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = [
-    "adk>=0.0.5",
-    "asyncclick>=8.1.8",
-    "click>=8.1.8",
-    "google-adk>=1.0.0",
-    "google-genai>=1.11.0",
-    "mcp[cli]>=1.10.1",
-    "python-dotenv>=1.1.0",
+    "a2a-sdk[http-server]>=0.3.0",
+    "fastmcp>=0.1.0",
+    "httpx>=0.27.0",
+    "langchain-core>=0.3.0",
+    "langchain-openai>=0.2.0",
+    "langgraph>=0.2.0",
+    "python-dotenv>=1.0.0",
+    "uvicorn>=0.30.0",
 ]

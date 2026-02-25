@@ -1,0 +1,19 @@
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "message/send",
+  "params": {
+    "message": {
+      "kind": "message",
+      "messageId": "test-msg-001",
+      "role": "user",
+      "parts": [
+        {
+          "kind": "text",
+          "text": "What is 2 + 2? Reply in one sentence."
+        }
+      ]
+    },
+    "metadata": {}
+  }
+}
